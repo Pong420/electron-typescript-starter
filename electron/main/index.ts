@@ -1,7 +1,7 @@
 import path from 'path';
-import { app, BrowserWindow, WebPreferences } from 'electron';
+import { app, BrowserWindow, ipcMain, WebPreferences } from 'electron';
 import { getWindowPosition, saveWindowPosition } from './position';
-import { registerDarkMode } from './darkMode';
+import { registerIpcHandlers } from '../apis';
 
 const development = process.env.NODE_ENV === 'development';
 
@@ -30,7 +30,7 @@ async function createWindow() {
     mainWindow.loadFile(path.join(__dirname, 'index.html'));
   }
 
-  registerDarkMode();
+  registerIpcHandlers(ipcMain);
 
   // // Open the DevTools.
   // mainWindow.webContents.openDevTools();

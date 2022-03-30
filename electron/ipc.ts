@@ -1,8 +1,13 @@
 import { contextBridge } from 'electron';
 
-// https://github.com/electron-userland/spectron/issues/693#issuecomment-888793600
+interface APIInstance {
+  key: string;
+  channel: string;
+  handler: (...args: any) => any;
+}
 
-export function register(apiKey: string, api: any) {
+// https://github.com/electron-userland/spectron/issues/693#issuecomment-888793600
+function exposeInMainWorld(apiKey: string, api: any) {
   if (process.env.NODE_ENV !== 'development') {
     /**
      * The "Main World" is the JavaScript context that your main renderer code runs in.
@@ -39,4 +44,33 @@ export function register(apiKey: string, api: any) {
     // @ts-expect-error https://github.com/electron-userland/spectron/issues/693#issuecomment-747872160
     window[apiKey] = api;
   }
+}
+
+export function createApi<T extends Record<string, APIInstance['handler']>>(parent: string, obj: T) {
+  const results: APIInstance[] = [];
+
+  for (const key in obj) {
+    const channel = `${parent}:${key}`;
+    const handler = obj[key];
+    results.push({
+      key,
+      channel,
+      handler
+    });
+  }
+
+  const handle = (ipcMain: Electron.IpcMain) => {
+    for (const { channel, handler } of results) {
+      ipcMain.handle(channel, handler);
+    }
+  };
+
+  const expose = (ipcRenderer: Electron.IpcRenderer) => {
+    const apis = results.reduce((apis, { key, channel }) => {
+      return { ...apis, [key as keyof T]: (...args: any) => ipcRenderer.invoke(channel, ...args) };
+    }, {} as Record<keyof T, Promise<any>>);
+    return exposeInMainWorld(parent, apis);
+  };
+
+  return { handle, expose };
 }
