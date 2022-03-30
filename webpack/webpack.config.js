@@ -22,7 +22,7 @@ const outDir = 'dist';
 module.exports = async (env, argv) => {
   /** @type {Config} */
   const main = {
-    entry: './electron/main.ts',
+    entry: './electron/main/index.ts',
     target: 'electron-main',
     output: {
       filename: 'main.js'
@@ -31,7 +31,7 @@ module.exports = async (env, argv) => {
 
   /** @type {Config} */
   const preload = {
-    entry: './electron/preload.ts',
+    entry: './electron/preload/index.ts',
     target: 'electron-preload',
     output: {
       filename: 'preload.js'
@@ -42,6 +42,7 @@ module.exports = async (env, argv) => {
   const renderer = {
     entry: './src/index.ts',
     target: 'electron-renderer',
+    devtool: 'source-map',
     output: {
       filename: 'renderer.[contenthash].js'
     },
@@ -75,6 +76,10 @@ module.exports = async (env, argv) => {
             // disable type checker - we will use it in fork plugin
             transpileOnly: true
           }
+        },
+        {
+          test: /\.s[ac]ss$/i,
+          use: ['style-loader', 'css-loader', 'sass-loader']
         }
       ]
     },

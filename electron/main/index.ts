@@ -1,6 +1,7 @@
 import path from 'path';
 import { app, BrowserWindow, WebPreferences } from 'electron';
 import { getWindowPosition, saveWindowPosition } from './position';
+import { registerDarkMode } from './darkMode';
 
 const development = process.env.NODE_ENV === 'development';
 
@@ -14,8 +15,10 @@ async function createWindow() {
     ...pos,
     width: 800,
     height: 600,
+    // contextIsolation: true,
     webPreferences: {
       ...webPreferences,
+      contextIsolation: !development,
       preload: path.join(__dirname, 'preload.js')
     }
   });
@@ -26,6 +29,8 @@ async function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, 'index.html'));
   }
+
+  registerDarkMode();
 
   // // Open the DevTools.
   // mainWindow.webContents.openDevTools();
