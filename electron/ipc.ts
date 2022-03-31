@@ -3,15 +3,13 @@ import { contextBridge } from 'electron';
 interface APIInstance {
   key: string;
   channel: string;
-  handler: (...args: any) => any;
+  handler: any;
 }
 
 type _Promise<T> = T extends Promise<any> ? T : Promise<T>;
 
 export type ExtractApi<T> = {
-  [X in keyof T]: T[X] extends (...args: any) => any
-  ? (...args: Parameters<T[X]>) => _Promise<ReturnType<T[X]>>
-  : never;
+  [X in keyof T]: T[X] extends (...args: any) => any ? (...args: Parameters<T[X]>) => _Promise<ReturnType<T[X]>> : T[X];
 };
 
 // https://github.com/electron-userland/spectron/issues/693#issuecomment-888793600
@@ -69,13 +67,19 @@ export function createApi<T extends Record<string, APIInstance['handler']>>(pare
 
   const handle = (ipcMain: Electron.IpcMain) => {
     for (const { channel, handler } of results) {
-      ipcMain.handle(channel, (_event, ...args) => handler(...args));
+      if (typeof handler === 'function') {
+        ipcMain.handle(channel, (_event, ...args) => handler(...args));
+      }
     }
   };
 
   const expose = (ipcRenderer: Electron.IpcRenderer) => {
-    const apis = results.reduce((apis, { key, channel }) => {
-      return { ...apis, [key as keyof T]: (...args: any) => ipcRenderer.invoke(channel, ...args) };
+    const apis = results.reduce((apis, { key, channel, handler }) => {
+      return {
+        ...apis,
+        [key as keyof T]:
+          typeof handler === 'function' ? (...args: any) => ipcRenderer.invoke(channel, ...args) : handler
+      };
     }, {} as Record<keyof T, Promise<any>>);
     return exposeInMainWorld(parent, apis);
   };
