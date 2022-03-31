@@ -1,15 +1,10 @@
 import { nativeTheme } from 'electron';
-import { createApi } from '../ipc';
+import { createApi, ExtractApi } from '../ipc';
 
-interface DarkModeFn {
-  toggle: () => Promise<boolean>;
-  system: () => Promise<void>;
-}
+type DarkModeAPI = ExtractApi<typeof apis>;
 
 declare global {
-  export interface Window {
-    darkMode: DarkModeFn;
-  }
+  const darkMode: DarkModeAPI;
 }
 
 const toggle = () => {
@@ -25,4 +20,6 @@ const system = () => {
   nativeTheme.themeSource = 'system';
 };
 
-export const darkMode = createApi('darkMode', { toggle, system });
+const apis = { toggle, system };
+
+export const darkMode = createApi('darkMode', apis);

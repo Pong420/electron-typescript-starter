@@ -12,5 +12,5 @@ yarn dev
 2. add all icon configured in `pack.js` and put into `public/icon`
 
 ```
-yarn pack
+yarn package
 ```

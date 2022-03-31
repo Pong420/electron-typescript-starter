@@ -6,6 +6,14 @@ interface APIInstance {
   handler: (...args: any) => any;
 }
 
+type _Promise<T> = T extends Promise<any> ? T : Promise<T>;
+
+export type ExtractApi<T> = {
+  [X in keyof T]: T[X] extends (...args: any) => any
+  ? (...args: Parameters<T[X]>) => _Promise<ReturnType<T[X]>>
+  : never;
+};
+
 // https://github.com/electron-userland/spectron/issues/693#issuecomment-888793600
 function exposeInMainWorld(apiKey: string, api: any) {
   if (process.env.NODE_ENV !== 'development') {
@@ -61,7 +69,7 @@ export function createApi<T extends Record<string, APIInstance['handler']>>(pare
 
   const handle = (ipcMain: Electron.IpcMain) => {
     for (const { channel, handler } of results) {
-      ipcMain.handle(channel, handler);
+      ipcMain.handle(channel, (_event, ...args) => handler(...args));
     }
   };
 
