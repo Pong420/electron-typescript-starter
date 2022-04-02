@@ -51,7 +51,7 @@ class ElectronPlugin {
         }
 
         timeout = setTimeout(() => {
-          const childProcess = spawn('yarn', ['electron', 'dist/main.js']);
+          const childProcess = spawn('yarn', ['electron', 'dist/main.js'], { shell: true, stdio: 'inherit' });
           pid = childProcess.pid;
         }, 500);
       }
